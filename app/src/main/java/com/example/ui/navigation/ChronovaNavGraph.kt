@@ -62,12 +62,10 @@ fun ChronovaNavGraph(
         }
         composable("search") {
             AISearchScreen(
-                onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                },
-                onNavigateToInsights = { navController.navigate("insights") }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToDetails = { memoryId ->
+                    navController.navigate("details/$memoryId")
+                }
             )
         }
         composable("insights") {
