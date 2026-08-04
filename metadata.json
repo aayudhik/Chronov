@@ -1,0 +1,6 @@
+{
+  "name": "Chronova",
+  "description": "Chronova, your AI-powered memory timeline.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
