@@ -46,7 +46,9 @@ import com.example.ui.components.viewModelFactory
 @Composable
 fun HomeTimelineScreen(
     onNavigateToSearch: () -> Unit,
-    onNavigateToInsights: () -> Unit
+    onNavigateToInsights: () -> Unit,
+    onNavigateToCapture: () -> Unit,
+    onNavigateToDetails: (Long) -> Unit
 ) {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as ChronovaApplication).container
@@ -80,7 +82,7 @@ fun HomeTimelineScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { /*TODO Capture Memory*/ },
+                onClick = onNavigateToCapture,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 shape = RoundedCornerShape(16.dp),
@@ -154,12 +156,12 @@ fun HomeTimelineScreen(
 
                 if (hero != null) {
                     item {
-                        HeroCard(hero)
+                        HeroCard(hero, onClick = { onNavigateToDetails(hero.memory.id) })
                     }
                 }
 
                 itemsIndexed(rest) { index, item ->
-                    TimelineItem(item, isEven = index % 2 == 0)
+                    TimelineItem(item, isEven = index % 2 == 0, onClick = { onNavigateToDetails(item.memory.id) })
                 }
                 
                 item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -224,14 +226,14 @@ fun SkeletonTimelineItem() {
 }
 
 @Composable
-fun HeroCard(memoryWithMedia: MemoryWithMedia) {
+fun HeroCard(memoryWithMedia: MemoryWithMedia, onClick: () -> Unit) {
     val imageUrl = memoryWithMedia.media.firstOrNull { it.type == "image" }?.url
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(400.dp)
             .animateContentSize()
-            .clickable { /* TODO: Navigate to detail */ },
+            .clickable { onClick() },
         shape = RoundedCornerShape(32.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
@@ -296,7 +298,7 @@ fun HeroCard(memoryWithMedia: MemoryWithMedia) {
 }
 
 @Composable
-fun TimelineItem(memoryWithMedia: MemoryWithMedia, isEven: Boolean) {
+fun TimelineItem(memoryWithMedia: MemoryWithMedia, isEven: Boolean, onClick: () -> Unit) {
     val imageUrls = memoryWithMedia.media.filter { it.type == "image" }.map { it.url }
     val tags = memoryWithMedia.media.filter { it.type == "tag" }.map { it.label }
     
@@ -304,7 +306,7 @@ fun TimelineItem(memoryWithMedia: MemoryWithMedia, isEven: Boolean) {
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize()
-            .clickable { /* TODO: Navigate to detail */ },
+            .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),

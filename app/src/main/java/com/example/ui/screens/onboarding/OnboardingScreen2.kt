@@ -5,7 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -136,7 +137,7 @@ fun OnboardingScreen2(onStart: () -> Unit) {
             ) {
                 Text("Start My Journey", style = MaterialTheme.typography.labelLarge)
                 Spacer(modifier = Modifier.width(8.dp))
-                Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Start")
+                Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Start")
             }
         }
     }

@@ -10,6 +10,18 @@ import java.util.Calendar
 class MemoryRepository(private val database: ChronovaDatabase) {
     val allMemories: Flow<List<MemoryWithMedia>> = database.memoryDao().getAllMemoriesWithMedia()
 
+    fun getMemoryWithMedia(memoryId: Long): Flow<MemoryWithMedia?> {
+        return database.memoryDao().getMemoryWithMedia(memoryId)
+    }
+
+    suspend fun updateMemory(memory: Memory) {
+        database.memoryDao().updateMemory(memory)
+    }
+
+    suspend fun deleteMemory(memory: Memory) {
+        database.memoryDao().deleteMemory(memory)
+    }
+
     suspend fun insertMemoryWithMedia(memory: Memory, media: List<Media>) {
         val memoryId = database.memoryDao().insertMemory(memory)
         val mediaWithMemoryId = media.map { it.copy(memoryId = memoryId) }

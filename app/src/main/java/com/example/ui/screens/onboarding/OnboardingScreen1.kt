@@ -6,7 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
@@ -130,7 +131,7 @@ fun OnboardingScreen1(onNext: () -> Unit) {
                 ) {
                     Text("Next", style = MaterialTheme.typography.labelLarge)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(imageVector = Icons.Default.ArrowForward, contentDescription = "Next")
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Next")
                 }
             }
         }

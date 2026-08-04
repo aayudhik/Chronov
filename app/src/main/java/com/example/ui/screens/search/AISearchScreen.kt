@@ -1,268 +1,210 @@
 package com.example.ui.screens.search
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Landscape
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Timeline
-import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
+import com.example.ChronovaApplication
+import com.example.data.local.MemoryWithMedia
+import com.example.ui.components.viewModelFactory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AISearchScreen(
-    onNavigateToHome: () -> Unit,
-    onNavigateToInsights: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToDetails: (Long) -> Unit
 ) {
+    val context = LocalContext.current
+    val appContainer = (context.applicationContext as ChronovaApplication).container
+    val viewModel: AISearchViewModel = viewModel(
+        factory = viewModelFactory { AISearchViewModel(appContainer.memoryRepository) }
+    )
+
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val uiState by viewModel.uiState.collectAsState()
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                tonalElevation = 0.dp
-            ) {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToHome,
-                    icon = { Icon(Icons.Default.Timeline, contentDescription = "Timeline") },
-                    label = { Text("Timeline") }
+        topBar = {
+            TopAppBar(
+                title = { Text("AI Search") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
                 )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.PhotoLibrary, contentDescription = "Memories") },
-                    label = { Text("Memories") }
-                )
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "AI Search") },
-                    label = { Text("AI Search") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToInsights,
-                    icon = { Icon(Icons.Default.Analytics, contentDescription = "Insights") },
-                    label = { Text("Insights") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") }
-                )
-            }
+            )
         }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
         ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Spacer(modifier = Modifier.height(24.dp))
-                Text("AI Search", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Search Input
-                TextField(
-                    value = "",
-                    onValueChange = {},
-                    placeholder = { Text("Ask Chronova to find a memory...") },
-                    leadingIcon = { Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
-                    trailingIcon = {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.padding(end = 4.dp).size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Mic, contentDescription = "Voice", tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(8.dp))
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(32.dp)),
-                    shape = RoundedCornerShape(32.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        disabledIndicatorColor = Color.Transparent
-                    ),
-                    singleLine = true
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // Suggestion Chips
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    item {
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text("Show every mountain trip") },
-                            icon = { Icon(Icons.Default.Landscape, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                            shape = CircleShape
-                        )
-                    }
-                    item {
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text("Find sunset photos") },
-                            icon = { Icon(Icons.Default.WbTwilight, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                            shape = CircleShape
-                        )
-                    }
-                    item {
-                        SuggestionChip(
-                            onClick = { },
-                            label = { Text("Most visited restaurant") },
-                            icon = { Icon(Icons.Default.Restaurant, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                            shape = CircleShape
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                Text("Curated for you", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Medium)
-                Text("Memories you might be looking for today.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Bento Grid 
-                // Card 1: Full width
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(RoundedCornerShape(24.dp))
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuBZJm-X5IvfwnBiMmtxX5dUyMDJpYNw2LMOyZ4LheM8sqk12G_6BLDKT2Stcx2LLA30vninhQ3xtsE_rWEmH8M4qxAtRjrGE0dbkHoKKDh5vk1NEP6rju2ypSOZCMkMoPCRcEIMpGjC4nw5B_aPVrxbsHzhaVF8NIgG9A4ytpYl5n9Sa86jbdYIfka7enx4jGw0DIRoiyP2P9WtR_YCwYi7QTEHqghTatBISa2oatrqVD1pj29vobIg"),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
+            // Search Bar
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::onQueryChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                placeholder = { Text("Ask anything... e.g., 'When was my last beach trip?'") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = "AI Search",
+                        tint = MaterialTheme.colorScheme.primary
                     )
-                    Box(
-                        modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))))
-                    )
-                    Column(
-                        modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("GENERATED MEMORY", style = MaterialTheme.typography.labelMedium, color = Color.White)
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onQueryChange("") }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear")
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
-                            Text("Summer in the Alps", style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold)
-                            Surface(color = Color.White.copy(alpha = 0.2f), shape = CircleShape) {
-                                Text("Aug 2023", color = Color.White, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
+                    }
+                },
+                shape = RoundedCornerShape(32.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                ),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        keyboardController?.hide()
+                        viewModel.performSearch()
+                    }
+                ),
+                singleLine = true
+            )
+
+            // Content
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (val state = uiState) {
+                    is AISearchUiState.Idle -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(64.dp),
+                                    tint = MaterialTheme.colorScheme.outline
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    "Search your memories",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
                         }
                     }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    // Card 2
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(24.dp))
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuAyHrv0w3kzIS6vSyL0e80adq6-JAx7l3qAAGLe4DlRLr7rfFmNelpIGhFeyG9i9wf4ROZcaFLj8HDNVym8RY0Agg0qi6nfow7ELwF-LvLp4kCkJC9V_YvQqp2bO4KvPMdaHl18DFgDzcJ8aLWBKlZaCHIM_7pZO1QdTayYd-3XIVYwFZNaNslRjokDErYwndR_PgtsjeoiM0wSvrD9IxeQTy1CZRvOwt_AOq1zRCHc6k8eVXTbyKJk"),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                        Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)))))
-                        Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-                            Text("Dinner at Le Petit", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Medium)
-                            Text("Paris, France", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.8f))
+                    is AISearchUiState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
                         }
                     }
-
-                    // Card 3
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .aspectRatio(1f)
-                            .clip(RoundedCornerShape(24.dp))
-                    ) {
-                        Image(
-                            painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuB5OHWuGZHTzh7liHSBNv2zDsfsjm02yWEOZ-NgMhiG3l9PVLlSMO6sxCKE-bG8CDs8SL-QlJIcQCgDhDl3QqXGYcVG10ESlOKmpb1UYJP2hHY3b6vFAbbCE7rC9l7zZ_UdP5-BfXe7ainDc-13qKkVxmGCzTCvR796qx5NZ0i2VvtV-Jp2f1KLojdPx4AvfdgWVBjCaUzqvBTIAgF77tTaRyh1JUHpYyaIq1cvRCG5K4dFsyGBFoIH"),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
+                    is AISearchUiState.Success -> {
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier.fillMaxSize()
-                        )
-                        Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)))))
-                        Column(modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)) {
-                            Text("Coastal Retreat", style = MaterialTheme.typography.titleMedium, color = Color.White, fontWeight = FontWeight.Medium)
-                            Text("Malibu", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.8f))
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Pattern Detected
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    border = borderStroke(MaterialTheme.colorScheme.outline)
-                ) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primary) {
-                                Icon(Icons.Default.Psychology, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(8.dp))
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Pattern Detected", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "You tend to capture the most photos during the golden hour (5 PM - 7 PM). Would you like to view a collection of your sunset memories?",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = { },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
-                            Text("View Sunset Collection")
+                            item {
+                                // AI Summary Box
+                                Surface(
+                                    shape = RoundedCornerShape(24.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(20.dp)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                Icons.Default.AutoAwesome,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                "Gemini Summary",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = state.summary.ifBlank { "Thinking..." },
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            if (state.matchedMemories.isNotEmpty()) {
+                                item {
+                                    Text(
+                                        "Matched Memories",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                                    )
+                                }
+                                
+                                items(state.matchedMemories) { memory ->
+                                    SearchMemoryCard(
+                                        memoryWithMedia = memory,
+                                        onClick = { onNavigateToDetails(memory.memory.id) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    is AISearchUiState.Error -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(32.dp)
+                            )
                         }
                     }
                 }
@@ -271,6 +213,55 @@ fun AISearchScreen(
     }
 }
 
-private fun borderStroke(color: Color): androidx.compose.foundation.BorderStroke {
-    return androidx.compose.foundation.BorderStroke(1.dp, color)
+@Composable
+fun SearchMemoryCard(memoryWithMedia: MemoryWithMedia, onClick: () -> Unit) {
+    val imageUrls = memoryWithMedia.media.filter { it.type == "image" }.map { it.url }
+    val formatter = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (imageUrls.isNotEmpty()) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUrls.first()),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+            }
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = memoryWithMedia.memory.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = memoryWithMedia.memory.notes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = formatter.format(Date(memoryWithMedia.memory.timestamp)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+    }
 }

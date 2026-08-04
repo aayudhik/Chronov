@@ -14,6 +14,8 @@ import com.example.ui.screens.insights.InsightsScreen
 import com.example.ui.screens.onboarding.OnboardingScreen1
 import com.example.ui.screens.onboarding.OnboardingScreen2
 import com.example.ui.screens.search.AISearchScreen
+import com.example.ui.screens.capture.CaptureMemoryScreen
+import com.example.ui.screens.details.MemoryDetailsScreen
 
 @Composable
 fun ChronovaNavGraph(
@@ -41,7 +43,21 @@ fun ChronovaNavGraph(
         composable("home") {
             HomeTimelineScreen(
                 onNavigateToSearch = { navController.navigate("search") },
-                onNavigateToInsights = { navController.navigate("insights") }
+                onNavigateToInsights = { navController.navigate("insights") },
+                onNavigateToCapture = { navController.navigate("capture") },
+                onNavigateToDetails = { memoryId -> navController.navigate("details/$memoryId") }
+            )
+        }
+        composable("details/{memoryId}") { backStackEntry ->
+            val memoryId = backStackEntry.arguments?.getString("memoryId")?.toLongOrNull() ?: return@composable
+            MemoryDetailsScreen(
+                memoryId = memoryId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable("capture") {
+            CaptureMemoryScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable("search") {

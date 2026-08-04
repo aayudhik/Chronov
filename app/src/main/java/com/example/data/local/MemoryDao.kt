@@ -13,8 +13,18 @@ interface MemoryDao {
     @Query("SELECT * FROM memories ORDER BY timestamp DESC")
     fun getAllMemoriesWithMedia(): Flow<List<MemoryWithMedia>>
 
+    @Transaction
+    @Query("SELECT * FROM memories WHERE id = :memoryId")
+    fun getMemoryWithMedia(memoryId: Long): Flow<MemoryWithMedia?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemory(memory: Memory): Long
+
+    @androidx.room.Update
+    suspend fun updateMemory(memory: Memory)
+
+    @androidx.room.Delete
+    suspend fun deleteMemory(memory: Memory)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMedia(media: List<Media>)
