@@ -40,77 +40,25 @@ import coil.compose.rememberAsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InsightsScreen(
-    onNavigateToHome: () -> Unit,
-    onNavigateToSearch: () -> Unit
-) {
+fun InsightsScreen() {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as ChronovaApplication).container
     val viewModel: InsightsViewModel = viewModel(
         factory = viewModelFactory { InsightsViewModel(appContainer.memoryRepository) }
     )
     val uiState by viewModel.uiState.collectAsState()
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
-
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = { Text("Chronova", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
-                navigationIcon = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
-                    }
-                },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
                     scrolledContainerColor = MaterialTheme.colorScheme.surface
                 )
             )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                tonalElevation = 0.dp
-            ) {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToHome,
-                    icon = { Icon(Icons.Default.Timeline, contentDescription = "Timeline") },
-                    label = { Text("Timeline") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.PhotoLibrary, contentDescription = "Memories") },
-                    label = { Text("Memories") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToSearch,
-                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "AI Search") },
-                    label = { Text("AI Search") }
-                )
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Analytics, contentDescription = "Insights") },
-                    label = { Text("Insights") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") }
-                )
-            }
         }
     ) { padding ->
         if (uiState.isLoading) {

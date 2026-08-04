@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoryDao {
     @Transaction
+    @Query("SELECT * FROM memories WHERE userId = :userId ORDER BY timestamp DESC")
+    fun getAllMemoriesWithMediaForUser(userId: String): Flow<List<MemoryWithMedia>>
+
+    @Transaction
     @Query("SELECT * FROM memories ORDER BY timestamp DESC")
     fun getAllMemoriesWithMedia(): Flow<List<MemoryWithMedia>>
 

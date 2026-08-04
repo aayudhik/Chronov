@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Memory::class, Media::class], version = 1, exportSchema = false)
+@Database(entities = [Memory::class, Media::class], version = 2, exportSchema = false)
 abstract class ChronovaDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
 
@@ -19,7 +19,9 @@ abstract class ChronovaDatabase : RoomDatabase() {
                     context.applicationContext,
                     ChronovaDatabase::class.java,
                     "chronova_database"
-                ).build()
+                )
+                .fallbackToDestructiveMigration()
+                .build()
                 INSTANCE = instance
                 instance
             }

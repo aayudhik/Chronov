@@ -16,15 +16,23 @@ import com.example.ui.screens.onboarding.OnboardingScreen2
 import com.example.ui.screens.search.AISearchScreen
 import com.example.ui.screens.capture.CaptureMemoryScreen
 import com.example.ui.screens.details.MemoryDetailsScreen
+import com.example.ui.screens.memories.MemoriesScreen
+import com.example.ui.screens.profile.ProfileScreen
+import com.example.ui.screens.auth.AuthLandingScreen
+import com.example.ui.screens.auth.EmailAuthScreen
+import com.example.ui.screens.auth.PhoneAuthScreen
+import androidx.compose.ui.Modifier
 
 @Composable
 fun ChronovaNavGraph(
     navController: NavHostController = rememberNavController(),
-    startDestination: String = "onboarding1"
+    startDestination: String = "onboarding1",
+    modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
+        modifier = modifier,
         enterTransition = { fadeIn(animationSpec = tween(300)) },
         exitTransition = { fadeOut(animationSpec = tween(300)) },
         popEnterTransition = { fadeIn(animationSpec = tween(300)) },
@@ -35,15 +43,40 @@ fun ChronovaNavGraph(
         }
         composable("onboarding2") {
             OnboardingScreen2(onStart = {
-                navController.navigate("home") {
+                navController.navigate("auth_landing") {
                     popUpTo("onboarding1") { inclusive = true }
                 }
             })
         }
+        composable("auth_landing") {
+            AuthLandingScreen(
+                onEmailAuth = { navController.navigate("auth_email") },
+                onPhoneAuth = { navController.navigate("auth_phone") }
+            )
+        }
+        composable("auth_email") {
+            EmailAuthScreen(
+                onAuthSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("auth_landing") { inclusive = true }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable("auth_phone") {
+            PhoneAuthScreen(
+                onAuthSuccess = {
+                    navController.navigate("home") {
+                        popUpTo("auth_landing") { inclusive = true }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable("home") {
             HomeTimelineScreen(
                 onNavigateToSearch = { navController.navigate("search") },
-                onNavigateToInsights = { navController.navigate("insights") },
                 onNavigateToCapture = { navController.navigate("capture") },
                 onNavigateToDetails = { memoryId -> navController.navigate("details/$memoryId") }
             )
@@ -69,13 +102,22 @@ fun ChronovaNavGraph(
             )
         }
         composable("insights") {
-            InsightsScreen(
-                onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
+            InsightsScreen()
+        }
+        composable("memories") {
+            MemoriesScreen(
+                onNavigateToDetails = { memoryId ->
+                    navController.navigate("details/$memoryId")
+                }
+            )
+        }
+        composable("profile") {
+            ProfileScreen(
+                onNavigateToAuth = {
+                    navController.navigate("auth_landing") {
+                        popUpTo("home") { inclusive = false }
                     }
-                },
-                onNavigateToSearch = { navController.navigate("search") }
+                }
             )
         }
     }

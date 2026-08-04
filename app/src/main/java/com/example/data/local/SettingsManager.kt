@@ -13,14 +13,25 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 
 class SettingsManager(private val context: Context) {
     private val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+    private val AUTH_SKIPPED = booleanPreferencesKey("auth_skipped")
 
     val isOnboardingCompleted: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[ONBOARDING_COMPLETED] ?: false
     }
 
+    val isAuthSkipped: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[AUTH_SKIPPED] ?: false
+    }
+
     suspend fun setOnboardingCompleted(completed: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[ONBOARDING_COMPLETED] = completed
+        }
+    }
+
+    suspend fun setAuthSkipped(skipped: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[AUTH_SKIPPED] = skipped
         }
     }
 }

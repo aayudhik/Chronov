@@ -1,21 +1,30 @@
 package com.example.data.repository
 
+import com.example.data.auth.AuthRepository
 import com.example.data.local.ChronovaDatabase
 import com.example.data.local.Media
 import com.example.data.local.Memory
 import com.example.data.local.MemoryWithMedia
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 import java.util.Calendar
 
-class MemoryRepository(private val database: ChronovaDatabase) {
-    val allMemories: Flow<List<MemoryWithMedia>> = database.memoryDao().getAllMemoriesWithMedia()
+class MemoryRepository(private val database: ChronovaDatabase, private val authRepository: AuthRepository) {
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val allMemories: Flow<List<MemoryWithMedia>> = authRepository.currentUser.flatMapLatest { user ->
+        val userId = user?.uid ?: ""
+        database.memoryDao().getAllMemoriesWithMediaForUser(userId)
+    }
 
     fun getMemoryWithMedia(memoryId: Long): Flow<MemoryWithMedia?> {
         return database.memoryDao().getMemoryWithMedia(memoryId)
     }
 
     suspend fun updateMemory(memory: Memory) {
-        database.memoryDao().updateMemory(memory)
+        val currentUserId = authRepository.currentUser.value?.uid ?: ""
+        database.memoryDao().updateMemory(memory.copy(userId = currentUserId))
     }
 
     suspend fun deleteMemory(memory: Memory) {
@@ -23,7 +32,9 @@ class MemoryRepository(private val database: ChronovaDatabase) {
     }
 
     suspend fun insertMemoryWithMedia(memory: Memory, media: List<Media>) {
-        val memoryId = database.memoryDao().insertMemory(memory)
+        val currentUserId = authRepository.currentUser.value?.uid ?: ""
+        val memoryToInsert = memory.copy(userId = currentUserId)
+        val memoryId = database.memoryDao().insertMemory(memoryToInsert)
         val mediaWithMemoryId = media.map { it.copy(memoryId = memoryId) }
         database.memoryDao().insertMedia(mediaWithMemoryId)
     }

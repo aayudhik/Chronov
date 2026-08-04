@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "memories")
 data class Memory(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val userId: String = "",
     val timestamp: Long,
     val title: String = "",
     val locationName: String = "",

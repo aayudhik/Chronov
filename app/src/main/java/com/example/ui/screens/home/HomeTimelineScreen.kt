@@ -46,7 +46,6 @@ import com.example.ui.components.viewModelFactory
 @Composable
 fun HomeTimelineScreen(
     onNavigateToSearch: () -> Unit,
-    onNavigateToInsights: () -> Unit,
     onNavigateToCapture: () -> Unit,
     onNavigateToDetails: (Long) -> Unit
 ) {
@@ -63,13 +62,8 @@ fun HomeTimelineScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Chronova", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
-                navigationIcon = {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu", tint = MaterialTheme.colorScheme.primary)
-                    }
-                },
                 actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
+                    IconButton(onClick = onNavigateToSearch) {
                         Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary)
                     }
                 },
@@ -90,43 +84,6 @@ fun HomeTimelineScreen(
                 icon = { Icon(Icons.Default.Add, contentDescription = "Add") },
                 text = { Text("Capture Memory", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold) }
             )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                tonalElevation = 0.dp
-            ) {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Timeline, contentDescription = "Timeline") },
-                    label = { Text("Timeline") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.PhotoLibrary, contentDescription = "Memories") },
-                    label = { Text("Memories") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToSearch,
-                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = "AI Search") },
-                    label = { Text("AI Search") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = onNavigateToInsights,
-                    icon = { Icon(Icons.Default.Analytics, contentDescription = "Insights") },
-                    label = { Text("Insights") }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                    label = { Text("Profile") }
-                )
-            }
         }
     ) { padding ->
         if (memories.isEmpty()) {
