@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -25,6 +26,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,9 +49,9 @@ import com.example.ui.components.viewModelFactory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeTimelineScreen(
-    onNavigateToSearch: () -> Unit,
     onNavigateToCapture: () -> Unit,
-    onNavigateToDetails: (Long) -> Unit
+    onNavigateToDetails: (Long) -> Unit,
+    onNavigateToReviewDrafts: () -> Unit
 ) {
     val context = LocalContext.current
     val appContainer = (context.applicationContext as ChronovaApplication).container
@@ -55,24 +59,78 @@ fun HomeTimelineScreen(
         factory = viewModelFactory { HomeViewModel(appContainer.memoryRepository) }
     )
     val memories by viewModel.memories.collectAsState()
+    val draftMemories by viewModel.draftMemories.collectAsState()
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchActive by remember { mutableStateOf(false) }
+
+    val filteredMemories = remember(memories, searchQuery) {
+        if (searchQuery.isBlank() && !isSearchActive) memories
+        else {
+            val q = searchQuery.lowercase()
+            memories.filter { item ->
+                item.memory.title.lowercase().contains(q) ||
+                item.memory.notes.lowercase().contains(q) ||
+                item.memory.locationName.lowercase().contains(q) ||
+                item.memory.aiSummary.lowercase().contains(q) ||
+                item.media.any { it.type == "tag" && it.label.lowercase().contains(q) }
+            }
+        }
+    }
+    
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
-                title = { Text("Chronova", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
-                actions = {
-                    IconButton(onClick = onNavigateToSearch) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary)
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
+            if (isSearchActive) {
+                TopAppBar(
+                    title = {
+                        TextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text("Search memories...") },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = {
+                            if (searchQuery.isNotEmpty()) {
+                                searchQuery = ""
+                            } else {
+                                isSearchActive = false
+                            }
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-            )
+            } else {
+                TopAppBar(
+                    title = { Text("Chronova", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
+                    actions = {
+                        IconButton(onClick = { isSearchActive = true }) {
+                            Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -86,7 +144,16 @@ fun HomeTimelineScreen(
             )
         }
     ) { padding ->
-        if (memories.isEmpty()) {
+        if (filteredMemories.isEmpty() && isSearchActive && searchQuery.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("No memories match that search", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        } else if (memories.isEmpty() && !isSearchActive) {
             LazyColumn(
                 contentPadding = padding,
                 modifier = Modifier
@@ -108,8 +175,43 @@ fun HomeTimelineScreen(
             ) {
                 item { Spacer(modifier = Modifier.height(8.dp)) }
                 
-                val hero = memories.find { it.memory.isHero }
-                val rest = memories.filter { !it.memory.isHero }
+                if (isSearchActive) {
+                    item {
+                        Text(
+                            text = "${filteredMemories.size} result${if (filteredMemories.size != 1) "s" else ""}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
+                }
+                
+                val hero = if (isSearchActive) null else filteredMemories.find { it.memory.isHero }
+                val rest = if (isSearchActive) filteredMemories else filteredMemories.filter { !it.memory.isHero }
+
+                if (draftMemories.isNotEmpty() && !isSearchActive) {
+                    item {
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToReviewDrafts() }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text("Timeline Sync", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    Text("Review ${draftMemories.size} new memories", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (hero != null) {
                     item {

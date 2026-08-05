@@ -14,10 +14,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -63,6 +64,7 @@ fun ProfileScreen(onNavigateToAuth: () -> Unit) {
     var showLicenses by remember { mutableStateOf(false) }
 
     var showSignOutDialog by remember { mutableStateOf(false) }
+    var autoSyncEnabled by remember { mutableStateOf(false) }
 
     // Appearance Dialog
     if (showAppearanceDialog) {
@@ -531,6 +533,25 @@ fun ProfileScreen(onNavigateToAuth: () -> Unit) {
                     }
                 )
                 ListItem(
+                    headlineContent = { Text("Auto-Timeline Sync") },
+                    supportingContent = { Text("Generate drafts from device photos in background") },
+                    leadingContent = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
+                    trailingContent = { 
+                        Switch(
+                            checked = autoSyncEnabled,
+                            onCheckedChange = {
+                                autoSyncEnabled = it
+                                viewModel.toggleAutoTimelineSync(context, it)
+                                if (it) {
+                                    Toast.makeText(context, "Timeline Sync Enabled", Toast.LENGTH_SHORT).show()
+                                    viewModel.triggerSyncNow(context)
+                                }
+                            }
+                        )
+                    },
+                    modifier = Modifier.clickable {}
+                )
+                ListItem(
                     headlineContent = { Text("About") },
                     supportingContent = { Text("App version, licenses, and info") },
                     leadingContent = { Icon(Icons.Default.Info, contentDescription = null) },
@@ -542,7 +563,7 @@ fun ProfileScreen(onNavigateToAuth: () -> Unit) {
                 if (uiState.userEmailOrPhone != null) {
                     ListItem(
                         headlineContent = { Text("Sign Out", color = MaterialTheme.colorScheme.error) },
-                        leadingContent = { Icon(Icons.Default.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        leadingContent = { Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                         modifier = Modifier.clickable {
                             showSignOutDialog = true
                         }
@@ -550,7 +571,7 @@ fun ProfileScreen(onNavigateToAuth: () -> Unit) {
                 } else {
                     ListItem(
                         headlineContent = { Text("Sign In") },
-                        leadingContent = { Icon(Icons.Default.Login, contentDescription = null) },
+                        leadingContent = { Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null) },
                         modifier = Modifier.clickable {
                             onNavigateToAuth()
                         }

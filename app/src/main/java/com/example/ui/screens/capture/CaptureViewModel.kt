@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.data.ai.AIMemoryEngine
 
 data class CaptureUiState(
     val title: String = "",
@@ -18,7 +19,7 @@ data class CaptureUiState(
     val mood: String = "",
     val weather: String = "",
     val tags: String = "",
-    val photos: String = "",
+    val photos: List<String> = emptyList(),
     val videos: String = "",
     val voiceNotes: String = "",
     val isFavorite: Boolean = false,
@@ -26,7 +27,10 @@ data class CaptureUiState(
     val isSaved: Boolean = false
 )
 
-class CaptureViewModel(private val repository: MemoryRepository) : ViewModel() {
+class CaptureViewModel(
+    private val repository: MemoryRepository,
+    private val aiMemoryEngine: AIMemoryEngine
+) : ViewModel() {
     private val _uiState = MutableStateFlow(CaptureUiState())
     val uiState: StateFlow<CaptureUiState> = _uiState.asStateFlow()
 
@@ -54,8 +58,8 @@ class CaptureViewModel(private val repository: MemoryRepository) : ViewModel() {
         _uiState.update { it.copy(tags = tags) }
     }
 
-    fun updatePhotos(photos: String) {
-        _uiState.update { it.copy(photos = photos) }
+    fun addPhotos(paths: List<String>) {
+        _uiState.update { it.copy(photos = it.photos + paths) }
     }
 
     fun updateVideos(videos: String) {
@@ -89,12 +93,9 @@ class CaptureViewModel(private val repository: MemoryRepository) : ViewModel() {
             val mediaList = mutableListOf<Media>()
             
             // Add photos
-            if (currentState.photos.isNotBlank()) {
-                currentState.photos.split(",").forEach { url ->
-                    val trimmed = url.trim()
-                    if (trimmed.isNotEmpty()) {
-                        mediaList.add(Media(memoryId = 0, type = "image", url = trimmed))
-                    }
+            currentState.photos.forEach { path ->
+                if (path.isNotEmpty()) {
+                    mediaList.add(Media(memoryId = 0, type = "image", url = path))
                 }
             }
             
@@ -128,9 +129,14 @@ class CaptureViewModel(private val repository: MemoryRepository) : ViewModel() {
                 }
             }
             
-            repository.insertMemoryWithMedia(memory, mediaList)
+            val memoryId = repository.insertMemoryWithMedia(memory, mediaList)
             
             _uiState.update { it.copy(isSaving = false, isSaved = true) }
+            
+            // Run AI analysis in background
+            viewModelScope.launch {
+                aiMemoryEngine.analyzeMemory(memoryId)
+            }
         }
     }
 }

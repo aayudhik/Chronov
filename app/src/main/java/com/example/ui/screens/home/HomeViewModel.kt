@@ -23,4 +23,11 @@ class HomeViewModel(private val repository: MemoryRepository) : ViewModel() {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
         )
+
+    val draftMemories: StateFlow<List<MemoryWithMedia>> = repository.draftMemories
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 }

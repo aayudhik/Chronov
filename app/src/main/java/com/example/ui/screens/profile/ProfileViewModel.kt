@@ -149,4 +149,29 @@ class ProfileViewModel(
             onComplete()
         }
     }
+
+    fun toggleAutoTimelineSync(context: android.content.Context, enabled: Boolean) {
+        val workManager = androidx.work.WorkManager.getInstance(context)
+        if (enabled) {
+            val constraints = androidx.work.Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .build()
+            val request = androidx.work.PeriodicWorkRequestBuilder<com.example.workers.TimelineSyncWorker>(
+                1, java.util.concurrent.TimeUnit.DAYS
+            ).setConstraints(constraints).build()
+            workManager.enqueueUniquePeriodicWork(
+                "TimelineSync",
+                androidx.work.ExistingPeriodicWorkPolicy.KEEP,
+                request
+            )
+        } else {
+            workManager.cancelUniqueWork("TimelineSync")
+        }
+    }
+
+    fun triggerSyncNow(context: android.content.Context) {
+        val workManager = androidx.work.WorkManager.getInstance(context)
+        val request = androidx.work.OneTimeWorkRequestBuilder<com.example.workers.TimelineSyncWorker>().build()
+        workManager.enqueue(request)
+    }
 }

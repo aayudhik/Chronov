@@ -18,6 +18,8 @@ class MemoryRepository(private val database: ChronovaDatabase, private val authR
         database.memoryDao().getAllMemoriesWithMediaForUser(userId)
     }
 
+    val draftMemories: Flow<List<MemoryWithMedia>> = database.memoryDao().getDraftMemoriesWithMedia()
+
     fun getMemoryWithMedia(memoryId: Long): Flow<MemoryWithMedia?> {
         return database.memoryDao().getMemoryWithMedia(memoryId)
     }
@@ -31,12 +33,37 @@ class MemoryRepository(private val database: ChronovaDatabase, private val authR
         database.memoryDao().deleteMemory(memory)
     }
 
-    suspend fun insertMemoryWithMedia(memory: Memory, media: List<Media>) {
+    suspend fun insertMemoryWithMedia(memory: Memory, media: List<Media>): Long {
         val currentUserId = authRepository.currentUser.value?.uid ?: ""
         val memoryToInsert = memory.copy(userId = currentUserId)
         val memoryId = database.memoryDao().insertMemory(memoryToInsert)
         val mediaWithMemoryId = media.map { it.copy(memoryId = memoryId) }
         database.memoryDao().insertMedia(mediaWithMemoryId)
+        return memoryId
+    }
+
+    suspend fun insertMediaOnly(media: List<Media>) {
+        database.memoryDao().insertMedia(media)
+    }
+
+    val searchMessages: Flow<List<com.example.data.local.SearchMessage>> = database.memoryDao().getAllSearchMessages()
+
+    suspend fun insertSearchMessage(message: com.example.data.local.SearchMessage) {
+        database.memoryDao().insertSearchMessage(message)
+    }
+
+    suspend fun clearSearchHistory() {
+        database.memoryDao().clearSearchHistory()
+    }
+
+    val smartCollections: Flow<List<com.example.data.local.SmartCollection>> = database.memoryDao().getAllSmartCollections()
+
+    suspend fun insertSmartCollection(collection: com.example.data.local.SmartCollection) {
+        database.memoryDao().insertSmartCollection(collection)
+    }
+
+    suspend fun deleteSmartCollection(collection: com.example.data.local.SmartCollection) {
+        database.memoryDao().deleteSmartCollection(collection)
     }
 
     suspend fun populateInitialDataIfNeeded() {

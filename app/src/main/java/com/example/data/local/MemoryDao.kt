@@ -10,12 +10,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoryDao {
     @Transaction
-    @Query("SELECT * FROM memories WHERE userId = :userId ORDER BY timestamp DESC")
+    @Query("SELECT * FROM memories WHERE userId = :userId AND isDraft = 0 ORDER BY timestamp DESC")
     fun getAllMemoriesWithMediaForUser(userId: String): Flow<List<MemoryWithMedia>>
 
     @Transaction
-    @Query("SELECT * FROM memories ORDER BY timestamp DESC")
+    @Query("SELECT * FROM memories WHERE isDraft = 0 ORDER BY timestamp DESC")
     fun getAllMemoriesWithMedia(): Flow<List<MemoryWithMedia>>
+
+    @Transaction
+    @Query("SELECT * FROM memories WHERE isDraft = 1 ORDER BY timestamp DESC")
+    fun getDraftMemoriesWithMedia(): Flow<List<MemoryWithMedia>>
 
     @Transaction
     @Query("SELECT * FROM memories WHERE id = :memoryId")
@@ -35,4 +39,22 @@ interface MemoryDao {
 
     @Query("SELECT COUNT(*) FROM memories")
     suspend fun getMemoryCount(): Int
+
+    @Query("SELECT * FROM search_messages ORDER BY timestamp ASC")
+    fun getAllSearchMessages(): Flow<List<SearchMessage>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSearchMessage(message: SearchMessage)
+
+    @Query("DELETE FROM search_messages")
+    suspend fun clearSearchHistory()
+
+    @Query("SELECT * FROM smart_collections")
+    fun getAllSmartCollections(): Flow<List<SmartCollection>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSmartCollection(collection: SmartCollection)
+
+    @androidx.room.Delete
+    suspend fun deleteSmartCollection(collection: SmartCollection)
 }

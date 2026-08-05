@@ -28,7 +28,7 @@ fun ChronovaScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: ""
     
-    val hideBottomBarRoutes = listOf("onboarding1", "onboarding2", "capture", "auth_landing", "auth_email", "auth_phone")
+    val hideBottomBarRoutes = listOf("onboarding1", "onboarding2", "capture", "auth_landing", "auth_email", "auth_phone", "review_drafts")
     val showBottomBar = !hideBottomBarRoutes.contains(currentRoute) && !currentRoute.startsWith("details/")
 
     Scaffold(

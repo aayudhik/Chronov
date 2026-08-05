@@ -39,7 +39,7 @@ fun MemoryDetailsScreen(
     val context = LocalContext.current
     val appContainer = (context.applicationContext as ChronovaApplication).container
     val viewModel: MemoryDetailsViewModel = viewModel(
-        factory = viewModelFactory { MemoryDetailsViewModel(appContainer.memoryRepository) }
+        factory = viewModelFactory { MemoryDetailsViewModel(appContainer.memoryRepository, appContainer.aiMemoryEngine) }
     )
     
     LaunchedEffect(memoryId) {
@@ -49,6 +49,16 @@ fun MemoryDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     
     var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    val isEditing by viewModel.isEditing.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    
+    var editTitle by remember { mutableStateOf("") }
+    var editLocation by remember { mutableStateOf("") }
+    var editNotes by remember { mutableStateOf("") }
+    var editSentiment by remember { mutableStateOf("") }
+    var editScore by remember { mutableStateOf("") }
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -75,6 +85,7 @@ fun MemoryDetailsScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { },
@@ -91,41 +102,75 @@ fun MemoryDetailsScreen(
                 actions = {
                     if (uiState is MemoryDetailsUiState.Success) {
                         val memory = (uiState as MemoryDetailsUiState.Success).memoryWithMedia.memory
-                        IconButton(
-                            onClick = { viewModel.toggleFavorite() },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Icon(
-                                imageVector = if (memory.isHero) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite",
-                                tint = if (memory.isHero) MaterialTheme.colorScheme.primary else LocalContentColor.current
-                            )
-                        }
-                        IconButton(
-                            onClick = { /* TODO Edit */ },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit")
-                        }
-                        IconButton(
-                            onClick = { /* TODO Share */ },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Icon(Icons.Default.Share, contentDescription = "Share")
-                        }
-                        IconButton(
-                            onClick = { showDeleteDialog = true },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
-                            )
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                        val media = (uiState as MemoryDetailsUiState.Success).memoryWithMedia.media
+                        val heroImage = media.firstOrNull { it.type == "image" || it.type == "video" }
+                        
+                        if (isEditing) {
+                            IconButton(
+                                onClick = {
+                                    viewModel.updateMemoryDetails(editTitle, editLocation, editNotes, editSentiment, editScore)
+                                    coroutineScope.launch {
+                                        snackbarHostState.showSnackbar("Memory saved")
+                                    }
+                                },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(Icons.Default.Check, contentDescription = "Save")
+                            }
+                            IconButton(
+                                onClick = { viewModel.setEditing(false) },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Cancel")
+                            }
+                        } else {
+                            IconButton(
+                                onClick = { viewModel.toggleFavorite() },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (memory.isHero) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (memory.isHero) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                                )
+                            }
+                            IconButton(
+                                onClick = {
+                                    editTitle = memory.title
+                                    editLocation = memory.locationName
+                                    editNotes = memory.notes
+                                    editSentiment = memory.sentiment
+                                    editScore = memory.score.toString()
+                                    viewModel.setEditing(true)
+                                },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit")
+                            }
+                            IconButton(
+                                onClick = { shareMemory(context, memory, heroImage) },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(Icons.Default.Share, contentDescription = "Share")
+                            }
+                            IconButton(
+                                onClick = { showDeleteDialog = true },
+                                colors = IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)
+                                )
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
+                            }
                         }
                     }
                 },
@@ -200,68 +245,113 @@ fun MemoryDetailsScreen(
                                 .padding(horizontal = 24.dp)
                                 .offset(y = (-40).dp)
                         ) {
-                            Text(
-                                text = memory.title,
-                                style = MaterialTheme.typography.displaySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (memory.locationName.isNotEmpty()) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(memory.locationName, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                                if (memory.temperature.isNotEmpty()) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(memory.temperature, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                                if (memory.sentiment.isNotEmpty()) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(Icons.Default.Mood, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(16.dp))
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(memory.sentiment, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    }
-                                }
-                            }
-                            
-                            if (memory.score > 0) {
+                            if (isEditing) {
+                                OutlinedTextField(
+                                    value = editTitle,
+                                    onValueChange = { editTitle = it },
+                                    label = { Text("Title") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                                 Spacer(modifier = Modifier.height(16.dp))
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = RoundedCornerShape(16.dp)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text("AI Score ${memory.score}/100", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                                    OutlinedTextField(
+                                        value = editLocation,
+                                        onValueChange = { editLocation = it },
+                                        label = { Text("Location") },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    OutlinedTextField(
+                                        value = editSentiment,
+                                        onValueChange = { editSentiment = it },
+                                        label = { Text("Sentiment") },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedTextField(
+                                    value = editScore,
+                                    onValueChange = { editScore = it },
+                                    label = { Text("Score") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                OutlinedTextField(
+                                    value = editNotes,
+                                    onValueChange = { editNotes = it },
+                                    label = { Text("Notes") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    minLines = 3
+                                )
+                                Spacer(modifier = Modifier.height(24.dp))
+                            } else {
+                                Text(
+                                    text = memory.title,
+                                    style = MaterialTheme.typography.displaySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (memory.locationName.isNotEmpty()) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(memory.locationName, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                    if (memory.temperature.isNotEmpty()) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.WbSunny, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(memory.temperature, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                    if (memory.sentiment.isNotEmpty()) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.Mood, contentDescription = null, tint = MaterialTheme.colorScheme.tertiary, modifier = Modifier.size(16.dp))
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(memory.sentiment, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
                                     }
                                 }
+                                
+                                if (memory.score > 0) {
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = RoundedCornerShape(16.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(18.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("AI Score ${memory.score}/100", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+    
+                                Spacer(modifier = Modifier.height(24.dp))
+    
+                                Text(
+                                    text = memory.notes,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f
+                                )
                             }
 
-                            Spacer(modifier = Modifier.height(24.dp))
-
-                            Text(
-                                text = memory.notes,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.2f
-                            )
 
                             if (tags.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(24.dp))
@@ -279,6 +369,78 @@ fun MemoryDetailsScreen(
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                             )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // AI Analysis Section
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(Icons.Default.AutoAwesome, contentDescription = "AI", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text("AI Memory Engine", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                        }
+                                        IconButton(onClick = { viewModel.regenerateAiAnalysis() }) {
+                                            Icon(Icons.Default.Refresh, contentDescription = "Regenerate", tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                                        }
+                                    }
+                                    
+                                    if (memory.aiTitleSuggestion.isNotEmpty() && memory.aiTitleSuggestion != memory.title) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text("Title Suggestion", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                        Text(memory.aiTitleSuggestion, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                    }
+                                    
+                                    if (memory.aiSummary.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text("Summary", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                        Text(memory.aiSummary, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                    }
+                                    
+                                    if (memory.aiStory.isNotEmpty()) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text("Story", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                        Text(memory.aiStory, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer, fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            if (memory.aiCategory.isNotEmpty()) {
+                                                Text("Category", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                                Text(memory.aiCategory, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                            }
+                                            if (memory.aiActivityDetection.isNotEmpty()) {
+                                                Text("Activity", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                                Text(memory.aiActivityDetection, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                            }
+                                        }
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            if (memory.aiEmotionDetection.isNotEmpty()) {
+                                                Text("Emotion", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                                Text(memory.aiEmotionDetection, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                            }
+                                            if (memory.aiImportanceScore > 0) {
+                                                Text("Importance", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f))
+                                                Text("${memory.aiImportanceScore}/100", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                                            }
                                         }
                                     }
                                 }
@@ -382,4 +544,38 @@ fun MemoryDetailsScreen(
             }
         }
     }
+}
+
+private fun shareMemory(
+    context: android.content.Context,
+    memory: com.example.data.local.Memory,
+    heroImage: com.example.data.local.Media?
+) {
+    val dateString = java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault()).format(java.util.Date(memory.timestamp))
+    val shareText = "${memory.title}\nDate: $dateString\nLocation: ${memory.locationName}\n\n${memory.notes}"
+    
+    var imageUri: android.net.Uri? = null
+    if (heroImage != null && heroImage.url.startsWith(context.filesDir.absolutePath)) {
+        val file = java.io.File(heroImage.url)
+        if (file.exists()) {
+            imageUri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+        }
+    }
+    
+    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+        if (imageUri != null) {
+            type = "image/*"
+            putExtra(android.content.Intent.EXTRA_STREAM, imageUri)
+            putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } else {
+            type = "text/plain"
+            putExtra(android.content.Intent.EXTRA_TEXT, shareText)
+        }
+    }
+    context.startActivity(android.content.Intent.createChooser(intent, "Share Memory"))
 }
