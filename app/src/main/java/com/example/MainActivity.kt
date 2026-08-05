@@ -1,7 +1,7 @@
 package com.example
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +15,7 @@ import com.example.data.local.SettingsManager
 import com.example.ui.navigation.ChronovaScaffold
 import com.example.ui.theme.MyApplicationTheme
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -34,10 +34,15 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (isOnboardingCompleted != null && isSignedIn != null) {
+                        val isPinEnabled = appContainer.privacyManager.isPinEnabled.collectAsState().value
+                        val isBiometricEnabled = appContainer.privacyManager.isBiometricEnabled.collectAsState().value
+                        
                         val startDest = if (isOnboardingCompleted == false) {
                             "onboarding1"
                         } else if (!isSignedIn!!) {
                             "auth_landing"
+                        } else if (isPinEnabled || isBiometricEnabled) {
+                            "lock_screen"
                         } else {
                             "home"
                         }

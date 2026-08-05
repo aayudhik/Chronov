@@ -1,0 +1,1 @@
+sed -i 's/import androidx.compose.material.icons.filled.Sort/import androidx.compose.material.icons.filled.Sort\nimport androidx.compose.material.icons.filled.ArrowBack/' app/src/main/java/com/example/ui/screens/intelligence/IntelligenceScreen.kt

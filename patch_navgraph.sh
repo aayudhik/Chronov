@@ -1,17 +1,16 @@
-sed -i 's/import com.example.ui.screens.memories.MemoriesScreen/import com.example.ui.screens.memories.MemoriesScreen\nimport com.example.ui.screens.map.MapScreen/' app/src/main/java/com/example/ui/navigation/ChronovaNavGraph.kt
-sed -i '/composable("memories") {/!b;n;c\
-            MemoriesScreen(\
-                onNavigateToDetails = { memoryId ->\
-                    navController.navigate("details/$memoryId")\
-                },\
-                onNavigateToMap = {\
-                    navController.navigate("map")\
+sed -i 's/import com.example.ui.screens.privacy.LockScreen//g' app/src/main/java/com/example/ui/navigation/ChronovaNavGraph.kt
+sed -i '/import com.example.ui.screens.map.MapScreen/a\
+import com.example.ui.screens.privacy.LockScreen\
+import com.example.ui.screens.privacy.PrivacyScreen' app/src/main/java/com/example/ui/navigation/ChronovaNavGraph.kt
+
+sed -i '/composable("home") {/i\
+        composable("lock_screen") {\
+            LockScreen(onUnlocked = {\
+                navController.navigate("home") {\
+                    popUpTo("lock_screen") { inclusive = true }\
                 }\
-            )' app/src/main/java/com/example/ui/navigation/ChronovaNavGraph.kt
-sed -i '/composable("memories") {/i\
-        composable("map") {\
-            MapScreen(\
-                onNavigateBack = { navController.popBackStack() },\
-                onNavigateToDetails = { memoryId -> navController.navigate("details/$memoryId") }\
-            )\
+            })\
+        }\
+        composable("privacy") {\
+            PrivacyScreen()\
         }' app/src/main/java/com/example/ui/navigation/ChronovaNavGraph.kt

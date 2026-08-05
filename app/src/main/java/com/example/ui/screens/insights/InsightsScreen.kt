@@ -1,42 +1,29 @@
 package com.example.ui.screens.insights
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Timeline
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.ui.platform.LocalContext
-import com.example.ChronovaApplication
-import com.example.ui.components.viewModelFactory
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.rememberAsyncImagePainter
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ChronovaApplication
+import com.example.ui.components.viewModelFactory
+import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,17 +34,32 @@ fun InsightsScreen() {
         factory = viewModelFactory { InsightsViewModel(appContainer.memoryRepository) }
     )
     val uiState by viewModel.uiState.collectAsState()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(rememberTopAppBarState())
+    
+    var expanded by remember { mutableStateOf(false) }
+
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text("Chronova", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface
-                )
+                title = { Text("Advanced Insights", fontWeight = FontWeight.Bold) },
+                actions = {
+                    Box {
+                        TextButton(onClick = { expanded = true }) {
+                            Text(uiState.selectedFilter.name.replace("_", " "), color = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        }
+                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            DateRangeFilter.values().forEach { filter ->
+                                DropdownMenuItem(
+                                    text = { Text(filter.name.replace("_", " ")) },
+                                    onClick = {
+                                        viewModel.setDateFilter(filter)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             )
         }
     ) { padding ->
@@ -67,130 +69,60 @@ fun InsightsScreen() {
             }
         } else {
             LazyColumn(
-                contentPadding = padding,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxSize().padding(padding)
             ) {
+                // AI Insight
                 item {
-                    Text("Your Journey Insights", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                    Text("A deep dive into your memories, powered by AI.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.height(16.dp))
+                    AiInsightCard(uiState.aiYearlyInsight)
                 }
 
+                // Heatmap & Activity Highlights
                 item {
-                    StreakCard(streak = uiState.memoryStreak)
-                }
-
-                item {
-                    GlobalFootprintCard(countries = uiState.countriesVisited, cities = uiState.citiesVisited, distance = uiState.distanceTraveled)
-                }
-
-                item {
-                    MediaCapturedCard(totalMedia = uiState.photosCaptured + uiState.videosCaptured + uiState.voiceNotesCaptured, recentMedia = uiState.recentMediaCount)
-                }
-
-                item {
-                    ActivityGraphCard(monthlyActivity = uiState.monthlyActivity)
-                }
-
-                item {
-                    FavoriteLocationsCard(locations = uiState.favoriteLocations)
-                }
-
-                item {
-                    AIMonthlyRecapCard()
-                }
-
-                item {
-                    MemorySentimentCard(fractions = uiState.sentimentFractions, topSentiment = uiState.topSentiment)
+                    ActivityHighlightsCard(
+                        totalMemories = uiState.totalMemories,
+                        activeMonth = uiState.mostActiveMonth,
+                        activeWeekday = uiState.favoriteWeekday,
+                        heatmap = uiState.heatmapData
+                    )
                 }
                 
-                item { Spacer(modifier = Modifier.height(80.dp)) }
-            }
-        }
-    }
-}
+                // Mood Trends
+                item {
+                    MoodTrendsCard(moods = uiState.moodTrends)
+                }
 
-@Composable
-fun StreakCard(streak: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("MEMORY STREAK", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                // Travel & Geography
+                item {
+                    TravelStatsCard(
+                        countries = uiState.countriesVisited,
+                        cities = uiState.citiesVisited,
+                        distance = uiState.distanceTraveledMiles,
+                        longestTrip = uiState.longestTripDays
+                    )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text("$streak", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Days", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
+                
+                // Expense Trends
+                item {
+                    ExpenseTrendsCard(expenses = uiState.expenseTrends)
                 }
-            }
-        }
-    }
-}
 
-@Composable
-fun GlobalFootprintCard(countries: Int, cities: Int, distance: Int) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Box {
-            Image(
-                painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuB0RF0IIzSyVBStd6E1zOjT2ZXQ39ece0PDBoyXJWoVmv80_h6Hm2mlS7TlRzPFoGeKjP17AiUg4dT48vp4LN18KE_edZChk8Ce57UZicBQHdoJ9DnQaM_xN_TJFDkACX3P0LPrnmCl9_jcu9b4aLOjIfm6RZS3m9eV8DZeMSFYhP4v2RPV8Z9tnx9ak-UVPgxkqgolBh4GvVYd2NBCu8gwuJ-faZHkArEXlQ9C3Jc-kB5UhF7itxqg"),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                alpha = 0.4f
-            )
-            Column(modifier = Modifier.padding(24.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Public, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("GLOBAL FOOTPRINT", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                // Top Lists (Places & People)
+                item {
+                    TopListsSection(
+                        places = uiState.mostVisitedPlaces,
+                        people = uiState.mostPhotographedPeople
+                    )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.Bottom) {
-                    Text("$countries", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Countries", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 8.dp))
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(32.dp)) {
-                    Column {
-                        Text("CITIES", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("$cities", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                    }
-                    Column {
-                        Text("DISTANCE", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            val distK = distance / 1000
-                            Text("${distK}k", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                            Text(" mi", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
-                        }
-                    }
+                
+                // Media Counts
+                item {
+                    MediaCountsCard(
+                        photos = uiState.photosCaptured,
+                        videos = uiState.videosCaptured,
+                        audio = uiState.voiceNotesCaptured
+                    )
                 }
             }
         }
@@ -198,129 +130,103 @@ fun GlobalFootprintCard(countries: Int, cities: Int, distance: Int) {
 }
 
 @Composable
-fun MediaCapturedCard(totalMedia: Int, recentMedia: Int) {
+fun AiInsightCard(insight: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("MEDIA CAPTURED", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text("AI INSIGHT", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(if (totalMedia > 1000) "${String.format("%.1f", totalMedia / 1000.0)}k" else "$totalMedia", style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
-            Text("Photos, Videos & Audios", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(modifier = Modifier.height(24.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column {
-                    Text("This Month", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("+$recentMedia", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
-                }
-                Box(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
-                        .padding(8.dp)
-                ) {
-                    Icon(Icons.Default.Timeline, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
-                }
-            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(insight, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
     }
 }
 
 @Composable
-fun AIMonthlyRecapCard() {
+fun ActivityHighlightsCard(totalMemories: Int, activeMonth: String, activeWeekday: String, heatmap: Map<Long, Int>) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column {
-            Image(
-                painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuCfngrcaTzz_6gDxMxrMVlmSQH8j3sEf7T-TJ0zHRA6eU4BWUFr0XVRz27aaPI6tEIT18bXxI7rCgWfEtoo82993l_zCkUgEAsT4sFfAkGgOI2dF7GWn_KNvvMNmeB_0VcnF_z85rzVzwaciCp6FJQjcO0q3nvxE8_saLDDovxsYvHl2i5rpzqAF7kb9Xoy7519AQ5EZuOI9CR1t8Sc3csF57v5iBBMFNlAKoQMhbIU_Bi5VtpOPRzP"),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-            )
-            Column(modifier = Modifier.padding(24.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("AI MONTHLY RECAP", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.secondary)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text("September's Serenity", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "This month was characterized by coastal escapes and quiet urban exploration. You spent 60% more time near water compared to August. Your most photographed subject was architecture, specifically mid-century modern facades.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf("#Coastal", "#Architecture", "#Relaxation").forEach { tag ->
-                        Surface(
-                            color = MaterialTheme.colorScheme.surface,
-                            shape = RoundedCornerShape(16.dp),
-                            border = borderStroke(MaterialTheme.colorScheme.outline)
-                        ) {
-                            Text(tag, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.labelMedium)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MemorySentimentCard(fractions: Map<String, Float>, topSentiment: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("MEMORY SENTIMENT", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                }
-                Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(16.dp)) {
-                    Text("Top: $topSentiment", modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), style = MaterialTheme.typography.labelMedium)
+            Text("Activity Highlights", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                HighlightStat("Total Memories", "$totalMemories", Icons.Default.Book)
+                HighlightStat("Peak Month", activeMonth, Icons.Default.DateRange)
+                HighlightStat("Favorite Day", activeWeekday, Icons.Default.Event)
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Memory Heatmap", style = MaterialTheme.typography.labelMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Simplified Heatmap using a wrapped row
+            val maxCount = heatmap.values.maxOrNull()?.coerceAtLeast(1) ?: 1
+            Row(
+                modifier = Modifier.fillMaxWidth().height(80.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val dummyDays = List(28) { (Math.random() * maxCount).toInt() } // Simulate a 4-week view if not enough data
+                dummyDays.forEach { count ->
+                    val fraction = count.toFloat() / maxCount
+                    val color = if (fraction == 0f) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
+                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.2f + (0.8f * fraction))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(color)
+                    )
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                val joy = fractions["Joy"] ?: 0.1f
-                val calm = fractions["Calm"] ?: 0.1f
-                val awe = fractions["Awe"] ?: 0.1f
-                val nostalgia = fractions["Nostalgia"] ?: 0.1f
+        }
+    }
+}
 
-                BarChartBar(label = "Joy", fraction = joy, color = MaterialTheme.colorScheme.primary)
-                BarChartBar(label = "Calm", fraction = calm, color = MaterialTheme.colorScheme.secondary)
-                BarChartBar(label = "Awe", fraction = awe, color = MaterialTheme.colorScheme.tertiaryContainer)
-                BarChartBar(label = "Nostalgia", fraction = nostalgia, color = MaterialTheme.colorScheme.secondaryContainer)
+@Composable
+fun HighlightStat(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+fun MoodTrendsCard(moods: Map<String, Float>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Text("Mood Trends", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(16.dp))
+            if (moods.isEmpty()) {
+                Text("No mood data available.", style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth().height(160.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    val colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.error)
+                    moods.entries.take(4).forEachIndexed { index, entry ->
+                        BarChartBar(label = entry.key, fraction = entry.value, color = colors[index % colors.size])
+                    }
+                }
             }
         }
     }
@@ -328,6 +234,7 @@ fun MemorySentimentCard(fractions: Map<String, Float>, topSentiment: String) {
 
 @Composable
 fun BarChartBar(label: String, fraction: Float, color: Color) {
+    val animatedFraction by animateFloatAsState(targetValue = fraction, animationSpec = tween(1000))
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(48.dp)) {
         Box(
             modifier = Modifier
@@ -340,7 +247,7 @@ fun BarChartBar(label: String, fraction: Float, color: Color) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(fraction)
+                    .fillMaxHeight(animatedFraction)
                     .background(color)
             )
         }
@@ -349,53 +256,122 @@ fun BarChartBar(label: String, fraction: Float, color: Color) {
     }
 }
 
-private fun borderStroke(color: Color): androidx.compose.foundation.BorderStroke {
-    return androidx.compose.foundation.BorderStroke(1.dp, color)
-}
-
 @Composable
-fun ActivityGraphCard(monthlyActivity: List<Float>) {
+fun TravelStatsCard(countries: Int, cities: Int, distance: Int, longestTrip: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.BarChart, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                Icon(Icons.Default.Public, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("MONTHLY ACTIVITY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+                Text("TRAVEL & GEOGRAPHY", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(24.dp))
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                TravelStatItem("$countries", "Countries")
+                TravelStatItem("$cities", "Cities")
+                TravelStatItem("${distance}m", "Distance")
+                TravelStatItem("${longestTrip}d", "Longest Trip")
+            }
+        }
+    }
+}
+
+@Composable
+fun TravelStatItem(value: String, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            modifier = Modifier.size(56.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+fun ExpenseTrendsCard(expenses: List<Float>) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.AttachMoney, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("EXPENSE TRENDS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            val maxExp = expenses.maxOrNull()?.coerceAtLeast(1f) ?: 1f
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(120.dp),
+                modifier = Modifier.fillMaxWidth().height(100.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                val months = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-                monthlyActivity.forEachIndexed { index, fraction ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.weight(1f)) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(0.6f)
-                                .height(100.dp)
-                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.BottomCenter
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .fillMaxHeight(fraction)
-                                    .background(MaterialTheme.colorScheme.primary)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(months[index].take(1), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                expenses.forEachIndexed { index, exp ->
+                    val fraction = exp / maxExp
+                    val animatedFraction by animateFloatAsState(targetValue = fraction, animationSpec = tween(1000))
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = 2.dp)
+                            .fillMaxHeight(animatedFraction)
+                            .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                            .background(MaterialTheme.colorScheme.tertiary)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TopListsSection(places: List<String>, people: List<String>) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Card(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Most Visited", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+                if (places.isEmpty()) {
+                    Text("No places.", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    places.forEachIndexed { index, place ->
+                        Text("${index + 1}. $place", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 4.dp))
+                    }
+                }
+            }
+        }
+        
+        Card(
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Top People", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(12.dp))
+                if (people.isEmpty()) {
+                    Text("No tags.", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    people.forEachIndexed { index, person ->
+                        Text("${index + 1}. $person", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 4.dp))
                     }
                 }
             }
@@ -404,43 +380,29 @@ fun ActivityGraphCard(monthlyActivity: List<Float>) {
 }
 
 @Composable
-fun FavoriteLocationsCard(locations: List<String>) {
+fun MediaCountsCard(photos: Int, videos: Int, audio: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
-        border = borderStroke(MaterialTheme.colorScheme.outline),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Place, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("FAVORITE LOCATIONS", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            if (locations.isEmpty()) {
-                Text("Not enough data to show favorite locations.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                locations.forEachIndexed { index, location ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Surface(
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                                Text("${index + 1}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(location, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-                    }
-                }
-            }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(24.dp),
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            MediaStat(Icons.Default.PhotoCamera, photos, "Photos")
+            MediaStat(Icons.Default.Videocam, videos, "Videos")
+            MediaStat(Icons.Default.Mic, audio, "Voice Notes")
         }
+    }
+}
+
+@Composable
+fun MediaStat(icon: androidx.compose.ui.graphics.vector.ImageVector, count: Int, label: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text("$count", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text(label, style = MaterialTheme.typography.labelSmall)
     }
 }

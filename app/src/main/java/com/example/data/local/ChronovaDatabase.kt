@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import net.sqlcipher.database.SupportFactory
 
 @Database(entities = [Memory::class, Media::class, SearchMessage::class, SmartCollection::class, LifeChapter::class, Story::class], version = 9, exportSchema = false)
 abstract class ChronovaDatabase : RoomDatabase() {
@@ -68,16 +69,25 @@ abstract class ChronovaDatabase : RoomDatabase() {
             }
         }
 
-        fun getDatabase(context: Context): ChronovaDatabase {
+        fun getDatabase(context: Context, passphrase: kotlin.ByteArray? = null): ChronovaDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
+                if (passphrase != null) {
+                    DatabaseEncryptionHelper.encryptDatabase(context, passphrase)
+                }
+                
+                val builder = Room.databaseBuilder(
                     context.applicationContext,
                     ChronovaDatabase::class.java,
                     "chronova_database"
                 )
                 .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .fallbackToDestructiveMigration(dropAllTables = false)
-                .build()
+                
+                if (passphrase != null) {
+                    builder.openHelperFactory(SupportFactory(passphrase))
+                }
+                
+                val instance = builder.build()
                 INSTANCE = instance
                 instance
             }

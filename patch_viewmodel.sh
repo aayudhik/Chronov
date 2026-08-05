@@ -1,2 +1,1 @@
-sed -i 's/val memoryCount: Int/val memoryCount: Int,\n    val distinctLocations: Int/' app/src/main/java/com/example/ui/screens/memories/MemoriesViewModel.kt
-sed -i 's/memoryCount = memories.size/memoryCount = memories.size,\n                distinctLocations = memories.map { it.memory.locationName }.filter { it.isNotBlank() }.distinct().size/' app/src/main/java/com/example/ui/screens/memories/MemoriesViewModel.kt
+sed -i 's/monthCounts\[index\]! \* 15.5f/(monthCounts\[index\] ?: 0).toFloat() \* 15.5f/g' app/src/main/java/com/example/ui/screens/insights/InsightsViewModel.kt

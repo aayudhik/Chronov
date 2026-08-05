@@ -1,0 +1,2 @@
+sed -i 's/import androidx.compose.material.icons.filled.Book/import androidx.compose.material.icons.filled.Book\nimport androidx.compose.material.icons.filled.Psychology/' app/src/main/java/com/example/ui/navigation/ChronovaScaffold.kt
+sed -i 's/Triple("insights", Icons.Default.Insights, "Insights"),/Triple("insights", Icons.Default.Insights, "Insights"),\n                        Triple("intelligence", Icons.Default.Psychology, "Intelligence"),/' app/src/main/java/com/example/ui/navigation/ChronovaScaffold.kt

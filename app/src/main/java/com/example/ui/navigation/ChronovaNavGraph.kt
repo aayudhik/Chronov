@@ -19,7 +19,10 @@ import com.example.ui.screens.capture.CaptureMemoryScreen
 import com.example.ui.screens.details.MemoryDetailsScreen
 import com.example.ui.screens.memories.MemoriesScreen
 import com.example.ui.screens.stories.StoryScreen
+import com.example.ui.screens.intelligence.IntelligenceScreen
 import com.example.ui.screens.map.MapScreen
+import com.example.ui.screens.privacy.LockScreen
+import com.example.ui.screens.privacy.PrivacyScreen
 import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.auth.AuthLandingScreen
 import com.example.ui.screens.auth.EmailAuthScreen
@@ -77,6 +80,16 @@ fun ChronovaNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+        composable("lock_screen") {
+            LockScreen(onUnlocked = {
+                navController.navigate("home") {
+                    popUpTo("lock_screen") { inclusive = true }
+                }
+            })
+        }
+        composable("privacy") {
+            PrivacyScreen()
+        }
         composable("home") {
             HomeTimelineScreen(
                 onNavigateToCapture = { navController.navigate("capture") },
@@ -113,6 +126,9 @@ fun ChronovaNavGraph(
             StoryScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+        composable("intelligence") {
+            IntelligenceScreen()
         }
         composable("insights") {
             InsightsScreen()

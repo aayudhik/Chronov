@@ -1,0 +1,1 @@
+sed -i 's/val database by lazy { ChronovaDatabase.getDatabase(context) }/val privacyManager by lazy { com.example.domain.privacy.PrivacyManager(context) }\n    val database by lazy { ChronovaDatabase.getDatabase(context, "chronova_secure_key_123".toByteArray()) }/' app/src/main/java/com/example/di/AppContainer.kt

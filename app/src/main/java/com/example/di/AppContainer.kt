@@ -7,9 +7,11 @@ import com.example.data.repository.MemoryRepository
 import com.example.data.ai.AIMemoryEngine
 
 class AppContainer(private val context: Context) {
-    val database by lazy { ChronovaDatabase.getDatabase(context) }
+    val privacyManager by lazy { com.example.domain.privacy.PrivacyManager(context) }
+    val database by lazy { ChronovaDatabase.getDatabase(context, privacyManager.getDatabasePassphrase().let { String(it).toByteArray() }) }
     val authRepository by lazy { com.example.data.auth.AuthRepository() }
     val memoryRepository by lazy { MemoryRepository(database, authRepository) }
     val aiMemoryEngine by lazy { AIMemoryEngine(memoryRepository) }
     val storyGenerationService by lazy { com.example.domain.StoryGenerationService() }
+    val memoryIntelligenceService by lazy { com.example.domain.MemoryIntelligenceService() }
 }

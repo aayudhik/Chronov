@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -42,7 +44,9 @@ fun ChronovaScaffold(
                         Triple("search", Icons.Default.AutoAwesome, "AI Search"),
                         Triple("stories", Icons.Default.Book, "Stories"),
                         Triple("insights", Icons.Default.Insights, "Insights"),
-                        Triple("profile", Icons.Default.Person, "Profile")
+                        Triple("intelligence", Icons.Default.Psychology, "Intelligence"),
+                        Triple("profile", Icons.Default.Person, "Profile"),
+                        Triple("privacy", Icons.Default.Security, "Privacy")
                     )
                     
                     tabs.forEach { (route, icon, label) ->
