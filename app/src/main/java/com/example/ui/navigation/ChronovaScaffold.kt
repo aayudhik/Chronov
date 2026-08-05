@@ -6,6 +6,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -46,6 +47,7 @@ fun ChronovaScaffold(
                         Triple("insights", Icons.Default.Insights, "Insights"),
                         Triple("intelligence", Icons.Default.Psychology, "Intelligence"),
                         Triple("profile", Icons.Default.Person, "Profile"),
+                        Triple("on_this_day", Icons.Default.History, "This Day"),
                         Triple("privacy", Icons.Default.Security, "Privacy")
                     )
                     

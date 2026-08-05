@@ -45,6 +45,15 @@ import coil.compose.rememberAsyncImagePainter
 import com.example.ChronovaApplication
 import com.example.data.local.MemoryWithMedia
 import com.example.ui.components.viewModelFactory
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import com.example.ui.screens.onthisday.OnThisDayViewModel
+import com.example.ui.screens.onthisday.OnThisDayViewModelFactory
+import androidx.compose.ui.text.style.TextAlign
+import java.util.Date
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +67,12 @@ fun HomeTimelineScreen(
     val viewModel: HomeViewModel = viewModel(
         factory = viewModelFactory { HomeViewModel(appContainer.memoryRepository) }
     )
+    val onThisDayViewModel: OnThisDayViewModel = viewModel(
+        factory = OnThisDayViewModelFactory(appContainer.onThisDayRepository)
+    )
+    val onThisDayMemories by onThisDayViewModel.memories.collectAsState()
+    val onThisDaySettings by onThisDayViewModel.settings.collectAsState()
+
     val memories by viewModel.memories.collectAsState()
     val draftMemories by viewModel.draftMemories.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
@@ -471,6 +486,94 @@ fun TimelineItem(memoryWithMedia: MemoryWithMedia, isEven: Boolean, onClick: () 
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun OnThisDayCarousel(
+    memories: List<MemoryWithMedia>,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("Memory This Day", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("You made beautiful memories on this day.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(memories) { memoryWithMedia ->
+                OnThisDayMiniCard(
+                    memoryWithMedia = memoryWithMedia,
+                    onClick = onClick
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun OnThisDayMiniCard(
+    memoryWithMedia: MemoryWithMedia,
+    onClick: () -> Unit
+) {
+    val memory = memoryWithMedia.memory
+    val coverImage = memoryWithMedia.media.firstOrNull { it.type == "image" }?.url
+    val yearStr = SimpleDateFormat("yyyy", Locale.getDefault()).format(Date(memory.timestamp))
+    
+    Card(
+        modifier = Modifier
+            .width(280.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column {
+            if (coverImage != null) {
+                Image(
+                    painter = rememberAsyncImagePainter(coverImage),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxWidth().height(140.dp),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(140.dp).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+            }
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(yearStr, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                    if (memory.score > 0) {
+                        Text("Score ${memory.score}", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(memory.title.ifBlank { "Untitled" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (memory.locationName.isNotBlank()) {
+                    Text(memory.locationName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

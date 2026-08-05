@@ -23,6 +23,7 @@ import com.example.ui.screens.intelligence.IntelligenceScreen
 import com.example.ui.screens.map.MapScreen
 import com.example.ui.screens.privacy.LockScreen
 import com.example.ui.screens.privacy.PrivacyScreen
+import com.example.ui.screens.onthisday.OnThisDayScreen
 import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.auth.AuthLandingScreen
 import com.example.ui.screens.auth.EmailAuthScreen
@@ -86,6 +87,12 @@ fun ChronovaNavGraph(
                     popUpTo("lock_screen") { inclusive = true }
                 }
             })
+        }
+        composable("on_this_day") {
+            OnThisDayScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToMemory = { id -> navController.navigate("memory_detail/$id") }
+            )
         }
         composable("privacy") {
             PrivacyScreen()
