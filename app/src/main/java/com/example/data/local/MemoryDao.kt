@@ -57,4 +57,26 @@ interface MemoryDao {
 
     @androidx.room.Delete
     suspend fun deleteSmartCollection(collection: SmartCollection)
+
+    @Query("SELECT * FROM life_chapters ORDER BY startTimestamp DESC")
+    fun getAllLifeChapters(): Flow<List<LifeChapter>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLifeChapter(chapter: LifeChapter)
+
+    @androidx.room.Delete
+    suspend fun deleteLifeChapter(chapter: LifeChapter)
+
+    @Query("SELECT * FROM stories ORDER BY timestamp DESC")
+    fun getAllStories(): Flow<List<Story>>
+
+    @Query("SELECT * FROM stories WHERE id = :storyId")
+    fun getStoryById(storyId: Long): Flow<Story?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStory(story: Story): Long
+
+    @Query("DELETE FROM stories WHERE id = :storyId")
+    suspend fun deleteStory(storyId: Long)
+
 }

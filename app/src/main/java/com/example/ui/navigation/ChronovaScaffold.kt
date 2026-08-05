@@ -3,6 +3,7 @@ package com.example.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -39,6 +40,7 @@ fun ChronovaScaffold(
                         Triple("home", Icons.Default.Timeline, "Timeline"),
                         Triple("memories", Icons.Default.PhotoLibrary, "Memories"),
                         Triple("search", Icons.Default.AutoAwesome, "AI Search"),
+                        Triple("stories", Icons.Default.Book, "Stories"),
                         Triple("insights", Icons.Default.Insights, "Insights"),
                         Triple("profile", Icons.Default.Person, "Profile")
                     )

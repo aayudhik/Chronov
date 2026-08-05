@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Memory::class, Media::class, SearchMessage::class, SmartCollection::class], version = 6, exportSchema = false)
+@Database(entities = [Memory::class, Media::class, SearchMessage::class, SmartCollection::class, LifeChapter::class, Story::class], version = 9, exportSchema = false)
 abstract class ChronovaDatabase : RoomDatabase() {
     abstract fun memoryDao(): MemoryDao
 
@@ -49,6 +49,25 @@ abstract class ChronovaDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `life_chapters` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `startTimestamp` INTEGER NOT NULL, `endTimestamp` INTEGER NOT NULL, `customCoverUrl` TEXT NOT NULL, `aiSummary` TEXT NOT NULL, `milestones` TEXT NOT NULL, `statistics` TEXT NOT NULL, PRIMARY KEY(`id`))")
+            }
+        }
+
+        private val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE memories ADD COLUMN latitude REAL")
+                db.execSQL("ALTER TABLE memories ADD COLUMN longitude REAL")
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `stories` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `timestamp` INTEGER NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `coverImageUrl` TEXT NOT NULL, `timeRangeStart` INTEGER NOT NULL, `timeRangeEnd` INTEGER NOT NULL)")
+            }
+        }
+
         fun getDatabase(context: Context): ChronovaDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -56,7 +75,7 @@ abstract class ChronovaDatabase : RoomDatabase() {
                     ChronovaDatabase::class.java,
                     "chronova_database"
                 )
-                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
                 INSTANCE = instance

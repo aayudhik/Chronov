@@ -11,4 +11,5 @@ class AppContainer(private val context: Context) {
     val authRepository by lazy { com.example.data.auth.AuthRepository() }
     val memoryRepository by lazy { MemoryRepository(database, authRepository) }
     val aiMemoryEngine by lazy { AIMemoryEngine(memoryRepository) }
+    val storyGenerationService by lazy { com.example.domain.StoryGenerationService() }
 }

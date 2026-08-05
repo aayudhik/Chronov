@@ -18,6 +18,8 @@ import com.example.ui.screens.search.AISearchScreen
 import com.example.ui.screens.capture.CaptureMemoryScreen
 import com.example.ui.screens.details.MemoryDetailsScreen
 import com.example.ui.screens.memories.MemoriesScreen
+import com.example.ui.screens.stories.StoryScreen
+import com.example.ui.screens.map.MapScreen
 import com.example.ui.screens.profile.ProfileScreen
 import com.example.ui.screens.auth.AuthLandingScreen
 import com.example.ui.screens.auth.EmailAuthScreen
@@ -107,13 +109,27 @@ fun ChronovaNavGraph(
                 }
             )
         }
+        composable("stories") {
+            StoryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable("insights") {
             InsightsScreen()
+        }
+        composable("map") {
+            MapScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToDetails = { memoryId -> navController.navigate("details/$memoryId") }
+            )
         }
         composable("memories") {
             MemoriesScreen(
                 onNavigateToDetails = { memoryId ->
                     navController.navigate("details/$memoryId")
+                },
+                onNavigateToMap = {
+                    navController.navigate("map")
                 }
             )
         }

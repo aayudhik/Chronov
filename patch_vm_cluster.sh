@@ -1,0 +1,3 @@
+sed -i 's/val availableActivities: List<String> = emptyList()/val availableActivities: List<String> = emptyList(),\n    val clusters: List<MapCluster> = emptyList()/' app/src/main/java/com/example/ui/screens/map/MapViewModel.kt
+sed -i 's/data class MapUiState/data class MapCluster(\n    val latitude: Double,\n    val longitude: Double,\n    val memories: List<MemoryWithMedia>\n)\n\ndata class MapUiState/' app/src/main/java/com/example/ui/screens/map/MapViewModel.kt
+sed -i 's/availableActivities = activities/availableActivities = activities,\n            clusters = clusterMemories(filtered)/' app/src/main/java/com/example/ui/screens/map/MapViewModel.kt

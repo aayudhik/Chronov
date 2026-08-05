@@ -13,6 +13,14 @@ import java.util.Calendar
 class MemoryRepository(private val database: ChronovaDatabase, private val authRepository: AuthRepository) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    val allStories: Flow<List<com.example.data.local.Story>> = database.memoryDao().getAllStories()
+
+    fun getStoryById(id: Long) = database.memoryDao().getStoryById(id)
+
+    suspend fun insertStory(story: com.example.data.local.Story) = database.memoryDao().insertStory(story)
+
+    suspend fun deleteStory(id: Long) = database.memoryDao().deleteStory(id)
+
     val allMemories: Flow<List<MemoryWithMedia>> = authRepository.currentUser.flatMapLatest { user ->
         val userId = user?.uid ?: ""
         database.memoryDao().getAllMemoriesWithMediaForUser(userId)
@@ -66,6 +74,16 @@ class MemoryRepository(private val database: ChronovaDatabase, private val authR
         database.memoryDao().deleteSmartCollection(collection)
     }
 
+    val lifeChapters: Flow<List<com.example.data.local.LifeChapter>> = database.memoryDao().getAllLifeChapters()
+
+    suspend fun insertLifeChapter(chapter: com.example.data.local.LifeChapter) {
+        database.memoryDao().insertLifeChapter(chapter)
+    }
+
+    suspend fun deleteLifeChapter(chapter: com.example.data.local.LifeChapter) {
+        database.memoryDao().deleteLifeChapter(chapter)
+    }
+
     suspend fun populateInitialDataIfNeeded() {
         if (database.memoryDao().getMemoryCount() == 0) {
             val now = System.currentTimeMillis()
@@ -95,6 +113,8 @@ class MemoryRepository(private val database: ChronovaDatabase, private val authR
                     timestamp = now - dayMs,
                     title = "Yesterday",
                     locationName = "Downtown Cafe",
+                    latitude = 40.7128,
+                    longitude = -74.0060,
                     sentiment = "Joyful",
                     score = 92,
                     notes = "Productive afternoon session. Reconnected with Sarah over coffee and brainstormed the new project structure. Felt incredibly energized afterwards."
@@ -116,6 +136,8 @@ class MemoryRepository(private val database: ChronovaDatabase, private val authR
                     timestamp = now - 2 * dayMs,
                     title = "Oct 22",
                     locationName = "City Park",
+                    latitude = 40.785091,
+                    longitude = -73.968285,
                     sentiment = "Peaceful",
                     notes = "Took a long walk to clear my head. The autumn leaves are just starting to turn. Listened to a new podcast and found some much-needed clarity on the upcoming changes."
                 ),
@@ -134,6 +156,8 @@ class MemoryRepository(private val database: ChronovaDatabase, private val authR
                     timestamp = now - 4 * dayMs,
                     title = "Oct 20",
                     locationName = "Luigi's Italian",
+                    latitude = 41.902782,
+                    longitude = 12.496366,
                     sentiment = "Excited",
                     notes = "Mom's birthday dinner! The food was incredible, but the stories shared were even better. AI highlighted this as a significant social bonding moment for the month."
                 ),

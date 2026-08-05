@@ -1,0 +1,1 @@
+sed -i 's/val activeTab: Int = 0/val activeTab: Int = 0,\n    val lifeChapters: List<com.example.data.local.LifeChapter> = emptyList()/' app/src/main/java/com/example/ui/screens/memories/MemoriesViewModel.kt

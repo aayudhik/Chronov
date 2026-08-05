@@ -101,6 +101,7 @@ dependencies {
   implementation(libs.androidx.camera.core)
   implementation(libs.androidx.camera.lifecycle)
   implementation(libs.androidx.camera.view)
+  implementation("org.osmdroid:osmdroid-android:6.1.18")
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
 

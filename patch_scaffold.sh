@@ -1,0 +1,2 @@
+sed -i 's/import androidx.compose.material.icons.filled.AutoAwesome/import androidx.compose.material.icons.filled.AutoAwesome\nimport androidx.compose.material.icons.filled.Book/' app/src/main/java/com/example/ui/navigation/ChronovaScaffold.kt
+sed -i 's/Triple("search", Icons.Default.AutoAwesome, "AI Search"),/Triple("search", Icons.Default.AutoAwesome, "AI Search"),\n                        Triple("stories", Icons.Default.Book, "Stories"),/' app/src/main/java/com/example/ui/navigation/ChronovaScaffold.kt
