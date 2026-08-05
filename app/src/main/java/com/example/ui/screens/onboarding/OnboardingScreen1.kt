@@ -24,6 +24,167 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.ui.unit.sp
+
+@Composable
+fun ChronovaHeroIllustration(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier
+            .size(300.dp)
+            .clip(RoundedCornerShape(36.dp))
+            .border(
+                width = 1.5.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f),
+                        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f)
+                    )
+                ),
+                shape = RoundedCornerShape(36.dp)
+            ),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        tonalElevation = 8.dp
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Top App Badge
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "CHRONOVA",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            letterSpacing = 1.sp
+                        )
+                    }
+                }
+
+                // Subtitle
+                Text(
+                    text = "Capture, Relive & Cherish Your Life",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Floating Mock Memory Cards
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 4.dp,
+                    modifier = Modifier.fillMaxWidth(0.95f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                            modifier = Modifier.size(42.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.PhotoCamera,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Sunset at Beach",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Place,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = "Goa, India • Today",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Second Mini Card
+                Surface(
+                    shape = RoundedCornerShape(14.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    modifier = Modifier.fillMaxWidth(0.85f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "AI Timeline Synced",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun OnboardingScreen1(onNext: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize()) {
@@ -74,19 +235,7 @@ fun OnboardingScreen1(onNext: () -> Unit) {
                 verticalArrangement = Arrangement.Center
             ) {
                 // Hero Image
-                Box(
-                    modifier = Modifier
-                        .size(300.dp)
-                        .clip(RoundedCornerShape(40.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                ) {
-                    Image(
-                        painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuAeLB8P4v8d4OSSXT4qHIdBL7rvKcemdxGyAhzC390ZYheeGd6HYVpAsVmpo6DZ9YU1p9PBhLRQTK3NGgpHQaMADL3hXVfJ9ZtuaRJPzmgN3vM8usfJgxhY14-BKI1ObDMRe2bcfo8K8GInkl05wdWYvvOR_HvGGrP_e_grHwG0qXKedfys3CXVAKS5LM9Pgaf2YYM6dh3siaxvqXibehqLnXaxHhw3zigVXDASbq-61_P6Oviqe4WD"),
-                        contentDescription = "Onboarding Abstract",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+                ChronovaHeroIllustration()
 
                 Spacer(modifier = Modifier.height(48.dp))
 
