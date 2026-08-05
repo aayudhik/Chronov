@@ -130,8 +130,7 @@ fun OnboardingScreen2(onStart: () -> Unit) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .padding(bottom = 32.dp),
+                    .height(56.dp),
                 shape = CircleShape,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
@@ -139,6 +138,7 @@ fun OnboardingScreen2(onStart: () -> Unit) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Start")
             }
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

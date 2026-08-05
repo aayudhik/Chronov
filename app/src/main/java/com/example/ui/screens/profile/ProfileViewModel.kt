@@ -17,7 +17,8 @@ data class ProfileUiState(
     val distinctLocations: Int = 0,
     val totalImages: Int = 0,
     val longestStreak: Int = 0,
-    val userEmailOrPhone: String? = null
+    val userEmailOrPhone: String? = null,
+    val memories: List<com.example.data.local.MemoryWithMedia> = emptyList()
 )
 
 class ProfileViewModel(
@@ -69,13 +70,78 @@ class ProfileViewModel(
             distinctLocations = distinctLocations,
             totalImages = totalImages,
             longestStreak = maxStreak,
-            userEmailOrPhone = user?.email ?: user?.phoneNumber
+            userEmailOrPhone = user?.email ?: user?.phoneNumber,
+            memories = memories
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = ProfileUiState()
     )
+
+    fun generateExportText(
+        memories: List<com.example.data.local.MemoryWithMedia>,
+        format: String,
+        includeLocations: Boolean,
+        includeImages: Boolean = true
+    ): String {
+        return if (format == "JSON") {
+            buildString {
+                append("[\n")
+                memories.forEachIndexed { index, item ->
+                    append("  {\n")
+                    append("    \"id\": ${item.memory.id},\n")
+                    append("    \"title\": \"${item.memory.title.replace("\"", "\\\"")}\",\n")
+                    append("    \"notes\": \"${item.memory.notes.replace("\"", "\\\"")}\",\n")
+                    if (includeLocations) {
+                        append("    \"location\": \"${item.memory.locationName.replace("\"", "\\\"")}\",\n")
+                    }
+                    append("    \"timestamp\": ${item.memory.timestamp},\n")
+                    if (includeImages) {
+                        val images = item.media.filter { it.type == "image" && it.url.isNotBlank() }
+                        append("    \"images\": [\n")
+                        images.forEachIndexed { imgIdx, img ->
+                            append("      \"${img.url.replace("\"", "\\\"")}\"${if (imgIdx < images.size - 1) "," else ""}\n")
+                        }
+                        append("    ],\n")
+                    }
+                    append("    \"mediaCount\": ${item.media.size}\n")
+                    append("  }${if (index < memories.size - 1) "," else ""}\n")
+                }
+                append("]")
+            }
+        } else {
+            buildString {
+                append("CHRONOVA MEMORY EXPORT\n")
+                append("=======================\n")
+                append("Total Memories: ${memories.size}\n")
+                if (includeImages) {
+                    val imageCount = memories.flatMap { it.media }.count { it.type == "image" && it.url.isNotBlank() }
+                    append("Total Attached Images: $imageCount\n")
+                }
+                append("\n")
+                memories.forEach { item ->
+                    append("• ${item.memory.title}\n")
+                    if (includeLocations && item.memory.locationName.isNotBlank()) {
+                        append("  Location: ${item.memory.locationName}\n")
+                    }
+                    if (item.memory.notes.isNotBlank()) {
+                        append("  Notes: ${item.memory.notes}\n")
+                    }
+                    if (includeImages) {
+                        val images = item.media.filter { it.type == "image" && it.url.isNotBlank() }
+                        if (images.isNotEmpty()) {
+                            append("  Attached Images (${images.size}):\n")
+                            images.forEach { img ->
+                                append("    - ${img.url}\n")
+                            }
+                        }
+                    }
+                    append("\n")
+                }
+            }
+        }
+    }
 
     fun signOut(onComplete: () -> Unit) {
         viewModelScope.launch {
