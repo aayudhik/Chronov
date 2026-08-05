@@ -158,6 +158,7 @@ fun ChronovaNavGraph(
         }
         composable("profile") {
             ProfileScreen(
+                onNavigateToDest = { dest -> navController.navigate(dest) },
                 onNavigateToAuth = {
                     navController.navigate("auth_landing") {
                         popUpTo("home") { inclusive = false }

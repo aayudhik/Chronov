@@ -11,6 +11,10 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.Insights
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -35,7 +39,7 @@ import com.example.ui.components.viewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onNavigateToAuth: () -> Unit) {
+fun ProfileScreen(onNavigateToDest: (String) -> Unit = {}, onNavigateToAuth: () -> Unit) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val appContainer = (context.applicationContext as ChronovaApplication).container
@@ -498,6 +502,34 @@ fun ProfileScreen(onNavigateToAuth: () -> Unit) {
                 }
             }
 
+                        item {
+                Text(
+                    "Features",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                )
+            }
+            item {
+                ListItem(
+                    headlineContent = { Text("Stories") },
+                    supportingContent = { Text("AI generated memory collections") },
+                    leadingContent = { Icon(Icons.Default.Book, contentDescription = null) },
+                    modifier = Modifier.clickable { onNavigateToDest("stories") }
+                )
+                ListItem(
+                    headlineContent = { Text("Insights") },
+                    supportingContent = { Text("Analytics about your memories") },
+                    leadingContent = { Icon(Icons.Default.Insights, contentDescription = null) },
+                    modifier = Modifier.clickable { onNavigateToDest("insights") }
+                )
+                ListItem(
+                    headlineContent = { Text("On This Day") },
+                    supportingContent = { Text("Relive memories from the past") },
+                    leadingContent = { Icon(Icons.Default.History, contentDescription = null) },
+                    modifier = Modifier.clickable { onNavigateToDest("on_this_day") }
+                )
+            }
             item {
                 Text(
                     "Settings",
@@ -518,10 +550,10 @@ fun ProfileScreen(onNavigateToAuth: () -> Unit) {
                 )
                 ListItem(
                     headlineContent = { Text("Privacy") },
-                    supportingContent = { Text("Local encryption, location privacy, cache") },
-                    leadingContent = { Icon(Icons.Default.Lock, contentDescription = null) },
+                    supportingContent = { Text("Manage encryption and privacy settings") },
+                    leadingContent = { Icon(Icons.Default.Security, contentDescription = null) },
                     modifier = Modifier.clickable {
-                        showPrivacyDialog = true
+                        onNavigateToDest("privacy")
                     }
                 )
                 ListItem(

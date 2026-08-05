@@ -43,12 +43,8 @@ fun ChronovaScaffold(
                         Triple("home", Icons.Default.Timeline, "Timeline"),
                         Triple("memories", Icons.Default.PhotoLibrary, "Memories"),
                         Triple("search", Icons.Default.AutoAwesome, "AI Search"),
-                        Triple("stories", Icons.Default.Book, "Stories"),
-                        Triple("insights", Icons.Default.Insights, "Insights"),
                         Triple("intelligence", Icons.Default.Psychology, "Intelligence"),
-                        Triple("profile", Icons.Default.Person, "Profile"),
-                        Triple("on_this_day", Icons.Default.History, "This Day"),
-                        Triple("privacy", Icons.Default.Security, "Privacy")
+                        Triple("profile", Icons.Default.Person, "Profile")
                     )
                     
                     tabs.forEach { (route, icon, label) ->
